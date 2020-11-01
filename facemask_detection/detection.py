@@ -86,6 +86,11 @@ cascade_file = "haarcascade_frontalface_default.xml"
 wOut_mask = isolate_face(wOut_mask, cascade_file)
 with_mask = isolate_face(with_mask, cascade_file)
 
+w, h = min(wOut_mask.shape[:2], with_mask.shape[:2]) 
+
+wOut_mask = cv2.resize(wOut_mask, (h, w))
+with_mask = cv2.resize(with_mask, (h, w))
+
 show(wOut_mask, "Without mask")
 show(with_mask, "With mask")
 
@@ -101,7 +106,26 @@ show(skin_with_mask, "skin with mask")
 
 # Replace the mask region of that image with the corresponding 
 # skin region of the other image
-	
+## take the difference between the two skin images
+removed_mask = numpy.zeros((w, h, 3), dtype=int)
+
+show(with_mask, "With mask again")
+for i in range(h):
+	for j in range(w):
+		if (skin_with_mask[j,i,0] == 0):
+			removed_mask[j,i,0] = wOut_mask[j,i,0] 
+			removed_mask[j,i,1] = wOut_mask[j,i,1] 
+			removed_mask[j,i,2] = wOut_mask[j,i,2] 
+		else:
+			removed_mask[j,i,0] = with_mask[j,i,0] 
+			removed_mask[j,i,1] = with_mask[j,i,1] 
+			removed_mask[j,i,2] = with_mask[j,i,2] 
+
+
+show(removed_mask, "Just face mask area skin")
+
+removed_mask = with_mask + skin_under_mask	
+show(removed_mask, "Removed Mask")
 
 # Repair any evidence of the image crossover
 ## do some smoothing perhaps	
