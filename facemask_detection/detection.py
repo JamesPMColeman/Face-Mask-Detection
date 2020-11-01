@@ -22,6 +22,7 @@
 import numpy
 import cv2 
 from matplotlib import pyplot
+from scipy.signal import convolve2d
 
 # Helper methods
 def show(image, title):
@@ -122,13 +123,20 @@ for i in range(h):
 			removed_mask[j,i,2] = with_mask[j,i,2] 
 
 
-show(removed_mask, "Just face mask area skin")
-
-removed_mask = with_mask + skin_under_mask	
-show(removed_mask, "Removed Mask")
+show(removed_mask, "Merged images")
 
 # Repair any evidence of the image crossover
-## do some smoothing perhaps	
+## do some smoothing perhaps
+gamma = removed_mask / 255
+gamma_image = gamma ** 1.3
+
+show(gamma_image, "Gamma transform")
+	
+kernel = numpy.zeros((5, 5))
+kernel += 1/25
+
+# smoothed = convolve2d(removed_mas, -1, kernel)
+# show(smoothed, "Smoothed")
 
 # Enhance the image
 ## choose a couple techniques from homework 2
