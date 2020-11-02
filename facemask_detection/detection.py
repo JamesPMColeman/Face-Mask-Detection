@@ -149,8 +149,6 @@ blue = sub_matrix(removed_mask, 0)
 green = sub_matrix(removed_mask, 1)
 red = sub_matrix(removed_mask, 2)
 
-kernel1 = numpy.zeros((5, 5))
-kernel1 += 1/25
 kernel2 = numpy.ones((3,3))
 
 blue = cv2.dilate(blue, kernel2, iterations=2)
@@ -160,9 +158,7 @@ red = cv2.dilate(red, kernel2, iterations=2)
 blue = cv2.erode(blue, kernel2, iterations=2)
 green = cv2.erode(green, kernel2, iterations=2)
 red = cv2.erode(red, kernel2, iterations=2)
-# blue = cv2.filter2D(blue, -1, kernel)
-# green = cv2.filter2D(green, -1, kernel)
-# red = cv2.filter2D(red, -1, kernel) 
+
 
 for i in range(w):
 	for j in range(h):
@@ -172,16 +168,26 @@ for i in range(w):
 
 show(removed_mask, "with dilation")
 
+# Enhance the image
+## choose a couple techniques from homework 2
+avg = numpy.zeros((3, 3))
+avg += 1/9
+
+blue = cv2.filter2D(blue, -1, avg)
+green = cv2.filter2D(green, -1, avg)
+red = cv2.filter2D(red, -1, avg) 
+
+for i in range(w):
+	for j in range(h):
+		removed_mask[i,j,0] = blue[i,j]
+		removed_mask[i,j,1] = green[i,j]
+		removed_mask[i,j,2] = red[i,j]
+
+show(removed_mask, "After averaging")
+
 gamma = removed_mask / 255
-gamma_image = gamma ** 1.3
+gamma_image = gamma ** .9
 
 show(gamma_image, "Gamma transform")
 	
-
-# smoothed = convolve2d(removed_mas, -1, kernel)
-# show(smoothed, "Smoothed")
-
-# Enhance the image
-## choose a couple techniques from homework 2
-
 
