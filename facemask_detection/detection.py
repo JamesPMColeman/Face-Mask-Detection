@@ -68,6 +68,13 @@ def skin_detection(image):
 	
 	return skin
 
+def sub_matrix(matrix, n):
+	h, w = matrix.shape[:2]
+	temp = numpy.zeros((h, w))
+	for i in range(h):
+		for j in range(w):
+			temp[i,j] = matrix[i,j,n]
+	return temp
 
 # Collect and sanitize input images
 ## get image
@@ -78,8 +85,8 @@ with_mask = cv2.imread('pp2.png')
 with_mask = cv2.cvtColor(with_mask, cv2.COLOR_BGR2RGB)
 wOut_mask = cv2.cvtColor(wOut_mask, cv2.COLOR_BGR2RGB)
 
-show(wOut_mask, "Without mask")
-show(with_mask, "With mask")
+# show(wOut_mask, "Without mask")
+# show(with_mask, "With mask")
 
 # Cut out head and neck region out of images
 ## use Haar cascade provided by professor Feng
@@ -110,10 +117,21 @@ show(skin_with_mask, "skin with mask")
 ## take the difference between the two skin images
 removed_mask = numpy.zeros((w, h, 3), dtype=int)
 
-show(with_mask, "With mask again")
-for i in range(h):
-	for j in range(w):
-		if (skin_with_mask[j,i,0] == 0):
+for i in range(4, h - 4):
+	for j in range(4, w - 4):
+		if (skin_with_mask[j,i,0] == 0 or
+            skin_with_mask[j + 1,i,0] == 0 or
+            skin_with_mask[j + 2,i,0] == 0 or
+            skin_with_mask[j + 3,i,0] == 0 or
+            skin_with_mask[j - 1,i,0] == 0 or
+            skin_with_mask[j - 2,i,0] == 0 or
+            skin_with_mask[j - 3,i,0] == 0 or
+            skin_with_mask[j,i + 1,0] == 0 or
+            skin_with_mask[j,i + 2,0] == 0 or
+            skin_with_mask[j,i + 3,0] == 0 or
+            skin_with_mask[j,i - 1,0] == 0 or
+            skin_with_mask[j,i - 2,0] == 0 or
+            skin_with_mask[j,i - 3,0] == 0):
 			removed_mask[j,i,0] = wOut_mask[j,i,0] 
 			removed_mask[j,i,1] = wOut_mask[j,i,1] 
 			removed_mask[j,i,2] = wOut_mask[j,i,2] 
@@ -127,13 +145,38 @@ show(removed_mask, "Merged images")
 
 # Repair any evidence of the image crossover
 ## do some smoothing perhaps
+blue = sub_matrix(removed_mask, 0)
+green = sub_matrix(removed_mask, 1)
+red = sub_matrix(removed_mask, 2)
+
+kernel1 = numpy.zeros((5, 5))
+kernel1 += 1/25
+kernel2 = numpy.ones((3,3))
+
+blue = cv2.dilate(blue, kernel2, iterations=2)
+green = cv2.dilate(green, kernel2, iterations=2)
+red = cv2.dilate(red, kernel2, iterations=2)
+
+blue = cv2.erode(blue, kernel2, iterations=2)
+green = cv2.erode(green, kernel2, iterations=2)
+red = cv2.erode(red, kernel2, iterations=2)
+# blue = cv2.filter2D(blue, -1, kernel)
+# green = cv2.filter2D(green, -1, kernel)
+# red = cv2.filter2D(red, -1, kernel) 
+
+for i in range(w):
+	for j in range(h):
+		removed_mask[i,j,0] = blue[i,j]
+		removed_mask[i,j,1] = green[i,j]
+		removed_mask[i,j,2] = red[i,j]
+
+show(removed_mask, "with dilation")
+
 gamma = removed_mask / 255
 gamma_image = gamma ** 1.3
 
 show(gamma_image, "Gamma transform")
 	
-kernel = numpy.zeros((5, 5))
-kernel += 1/25
 
 # smoothed = convolve2d(removed_mas, -1, kernel)
 # show(smoothed, "Smoothed")
